@@ -18,15 +18,17 @@ $signal  = new Seraph_Signal();
 $signals['seraph.handler.raw_request'] = $signal;
 
 // Dispatcher
-class HandlerTestFrontController implements Seraph_FrontController_Interface
+class HandlerTest implements Seraph_Application_Interface
 {
     public function onRequest(Seraph_Request $request, Seraph_Response $response) {
+        var_dump($request);
+        
         $response->setBody('Hello, World!');
     }
 }
 
-$frontController = new HandlerTestFrontController();
-$dispatcher      = new Seraph_Request_Dispatcher($frontController);
+$app        = new HandlerTest();
+$dispatcher = new Seraph_Request_Dispatcher($app);
 
 $signal->connect(array($dispatcher, 'onRawRequest'));
 

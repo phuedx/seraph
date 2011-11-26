@@ -11,18 +11,18 @@
 
 class Seraph_Request_DispatcherTest extends PHPUnit_Framework_TestCase
 {
-    protected $mockFrontController;
+    protected $mockApplication;
     protected $mockRequest;
     protected $mockResponse;
     protected $dispatcher;
 
     public function setUp() {
         // Mocks
-        $this->mockFrontController = $this->getMock('Seraph_FrontController_Interface');
-        $this->mockRequest         = $this->getMock('Seraph_Request');
-        $this->mockResponse        = $this->getMock('Seraph_Response');
+        $this->mockApplication = $this->getMock('Seraph_Application_Interface');
+        $this->mockRequest     = $this->getMock('Seraph_Request');
+        $this->mockResponse    = $this->getMock('Seraph_Response');
 
-        $this->dispatcher = new Seraph_Request_Dispatcher($this->mockFrontController, $this->mockRequest, $this->mockResponse);
+        $this->dispatcher = new Seraph_Request_Dispatcher($this->mockApplication, $this->mockRequest, $this->mockResponse);
     }
 
     public function testOnRawRequest() {
@@ -47,7 +47,7 @@ class Seraph_Request_DispatcherTest extends PHPUnit_Framework_TestCase
             ->method('setHeader')
             ->with(Seraph_Request_Dispatcher::SERVER_HEADER_NAME, $server);
 
-        $this->mockFrontController->expects($this->once())
+        $this->mockApplication->expects($this->once())
             ->method('onRequest')
             ->with($this->mockRequest, $this->mockResponse);
 

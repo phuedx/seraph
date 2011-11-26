@@ -13,11 +13,11 @@ class Seraph_Request_Dispatcher
 {
     const SERVER_HEADER_NAME = 'X-M2-Server';
 
-    protected $frontController;
+    protected $application;
     protected $request;
     protected $response;
 
-    public function __construct(Seraph_FrontController_Interface $frontController, Seraph_Request $request = null, Seraph_Response $response = null) {
+    public function __construct(Seraph_Application_Interface $application, Seraph_Request $request = null, Seraph_Response $response = null) {
         if ( ! $request) {
             $request = new Seraph_Request();
         }
@@ -26,9 +26,9 @@ class Seraph_Request_Dispatcher
             $response = new Seraph_Response();
         }
 
-        $this->frontController = $frontController;
-        $this->request         = $request;
-        $this->response        = $response;
+        $this->application = $application;
+        $this->request     = $request;
+        $this->response    = $response;
     }
 
     public function onRawRequest(ZMQSocket $inboundSocket, ZMQSocket $outboundSocket, $server) {
@@ -41,7 +41,7 @@ class Seraph_Request_Dispatcher
 
         $this->response->fromRequest($request);
 
-        $this->frontController->onRequest($request, $response); // It's dispatchin' time!
+        $this->application->onRequest($request, $response); // It's dispatchin' time!
 
         $outboundSocket->send($response);
     }

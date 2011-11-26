@@ -9,7 +9,7 @@
  * for the full copyright and license information.
  */
 
-interface Seraph_FrontController_Interface
+interface Seraph_Application_Interface
 {
     public function onRequest(Seraph_Request $request, Seraph_Response $response);
 }
