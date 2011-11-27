@@ -13,11 +13,11 @@ class Seraph_Request_Dispatcher
 {
     const SERVER_HEADER_NAME = 'X-M2-Server';
 
-    protected $application;
+    protected $applications;
     protected $request;
     protected $response;
 
-    public function __construct(Seraph_Application_Interface $application, Seraph_Request $request = null, Seraph_Response $response = null) {
+    public function __construct(Seraph_Request $request = null, Seraph_Response $response = null) {
         if ( ! $request) {
             $request = new Seraph_Request();
         }
@@ -26,10 +26,20 @@ class Seraph_Request_Dispatcher
             $response = new Seraph_Response();
         }
 
-        $this->application = $application;
-        $this->request     = $request;
-        $this->response    = $response;
+        $this->applications = array();
+        $this->request      = $request;
+        $this->response     = $response;
     }
+
+    public function registerApplication(Seraph_Application_Interface $application) {
+        if ( ! in_array($application, $this->applications)) {
+            $this->applications[] = $application;
+        }
+
+        return $this;
+    }
+
+    // public function deregisterApplication(Seraph_Application_Interface $application) { }
 
     public function onRawRequest(ZMQSocket $inboundSocket, ZMQSocket $outboundSocket, $server) {
         $request    = $this->request;
@@ -39,10 +49,14 @@ class Seraph_Request_Dispatcher
         $request->fromRawRequest($rawRequest)
             ->setHeader(self::SERVER_HEADER_NAME, $server);
 
-        $this->response->fromRequest($request);
+        $response->fromRequest($request);
 
-        $this->application->onRequest($request, $response); // It's dispatchin' time!
+        foreach ($this->applications as $application) {
+            $application->onRequest($request, $response); // It's dispatchin' time!
+        }
 
         $outboundSocket->send($response);
+
+        return $this;
     }
 }

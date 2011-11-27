@@ -22,14 +22,14 @@ class Seraph_Request_DispatcherTest extends PHPUnit_Framework_TestCase
         $this->mockRequest     = $this->getMock('Seraph_Request');
         $this->mockResponse    = $this->getMock('Seraph_Response');
 
-        $this->dispatcher = new Seraph_Request_Dispatcher($this->mockApplication, $this->mockRequest, $this->mockResponse);
+        $this->dispatcher = new Seraph_Request_Dispatcher($this->mockRequest, $this->mockResponse);
     }
 
     public function testOnRawRequest() {
         $context    = new ZMQContext();
         $rawRequest = 'RAW REQUEST';
         $server     = 'SERVER';
-        
+
         $mockInboundSocket = $this->getMockBuilder('ZMQSocket')
             ->setConstructorArgs(array($context, ZMQ::SOCKET_PULL))
             ->getMock();
@@ -63,6 +63,7 @@ class Seraph_Request_DispatcherTest extends PHPUnit_Framework_TestCase
             ->method('send')
             ->with($this->mockResponse);
 
-        $this->dispatcher->onRawRequest($mockInboundSocket, $mockOutboundSocket, $server);
+        $this->dispatcher->registerApplication($this->mockApplication)
+            ->onRawRequest($mockInboundSocket, $mockOutboundSocket, $server);
     }
 }

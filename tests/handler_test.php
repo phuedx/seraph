@@ -17,18 +17,17 @@ $signal  = new Seraph_Signal();
 
 $signals['seraph.handler.raw_request'] = $signal;
 
-// Dispatcher
-class HandlerTest implements Seraph_Application_Interface
+// App
+class HelloWorldApp implements Seraph_Application_Interface
 {
     public function onRequest(Seraph_Request $request, Seraph_Response $response) {
-        var_dump($request);
-        
         $response->setBody('Hello, World!');
     }
 }
 
-$app        = new HandlerTest();
-$dispatcher = new Seraph_Request_Dispatcher($app);
+$app        = new HelloWorldApp();
+$dispatcher = new Seraph_Request_Dispatcher();
+$dispatcher->registerApplication($app);
 
 $signal->connect(array($dispatcher, 'onRawRequest'));
 
