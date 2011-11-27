@@ -34,7 +34,8 @@ class HelloWorldApp implements Seraph_Application_Interface
 }
 
 $app        = new HelloWorldApp();
-$dispatcher = new Seraph_Request_Dispatcher($app);
+$dispatcher = new Seraph_Request_Dispatcher();
+$dispatcher->registerApplication($app);
 
 $signal->connect(array($dispatcher, 'onRawRequest'));
 
