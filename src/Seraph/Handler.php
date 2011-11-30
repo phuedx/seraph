@@ -19,24 +19,35 @@ class Seraph_Handler
     protected $poll;
     protected $outboundSockets;
 
-    public function __construct($id, Seraph_Signal_Collection $signals, ZMQContext $context = null, ZMQPoll $poll = null) {
+    public function __construct($id, Seraph_Signal_Collection $signals) {
         if ( ! trim($id)) {
             throw new InvalidArgumentException("\"{$id}\" isn't a good ID for a Seraph environment.");
         }
 
-        if ( ! $context) {
-            $context = new ZMQContext();
-        }
-
-        if ( ! $poll) {
-            $poll = new ZMQPoll();
-        }
-
         $this->id              = $id;
         $this->signals         = $signals;
-        $this->context         = $context;
-        $this->poll            = $poll;
+        $this->dispatcher      = new Seraph_Request_Dispatcher();
+        $this->context         = new ZMQContext();
+        $this->poll            = new ZMQPoll();
         $this->outboundSockets = array();
+    }
+
+    public function setDispatcher(Seraph_Request_Dispatcher $dispatcher) {
+        $this->dispatcher = $dispatcher;
+
+        return $this;
+    }
+
+    public function setContext(ZMQContext $context) {
+        $this->context = $context;
+
+        return $this;
+    }
+
+    public function setPoll(ZMQPoll $poll) {
+        $this->poll = $poll;
+
+        return $this;
     }
 
     public function registerServer($name, $senderDSN, $receiverDSN) {
@@ -59,7 +70,15 @@ class Seraph_Handler
         return $this;
     }
 
-    // TODO public function removeServer($name) { }
+    // public function removeServer($name) { }
+
+    public function registerApplication(Seraph_Application_Interface $application) {
+        $this->dispatcher->registerApplication($application);
+
+        return $this;
+    }
+
+    // public function removeApplication(Seraph_Application_Interface $application) { }
 
     public function run() {
         while (true) {
@@ -89,9 +108,14 @@ class Seraph_Handler
         foreach ($readable as $socket) {
             $name = $socket->getSockOpt(ZMQ::SOCKOPT_IDENTITY);
 
+            assert(strlen($name));
             assert(isset($this->outboundSockets[$name]));
 
-            $this->signals->emit('seraph.handler.raw_request', $socket, $this->outboundSockets[$name], $name);
+            $outboundSocket = $this->outboundSockets[$name];
+
+            $this->dispatcher->onRawRequest($socket, $outboundSocket, $name);
+
+            $this->signals->emit('seraph.handler.raw_request', $socket, $outboundSocket, $name);
         }
 
         assert(count($writeable) == 0);

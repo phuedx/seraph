@@ -17,14 +17,6 @@ Here's the smallest "Hello, World!" application that I can write *cleanly*:
 
 require_once '/path/to/seraph/autoload.php';
 
-// TODO Get rid of all of this ICKY bootstrap code!
-
-// Signals
-$signals = new Seraph_Signal_Collection();
-$signal  = new Seraph_Signal();
-
-$signals['seraph.handler.raw_request'] = $signal;
-
 // App
 class HelloWorldApp implements Seraph_Application_Interface
 {
@@ -33,15 +25,13 @@ class HelloWorldApp implements Seraph_Application_Interface
     }
 }
 
-$app        = new HelloWorldApp();
-$dispatcher = new Seraph_Request_Dispatcher();
-$dispatcher->registerApplication($app);
-
-$signal->connect(array($dispatcher, 'onRawRequest'));
+$app = new HelloWorldApp();
 
 // Handler
+$signals = new Seraph_Signal_Collection();
 $handler = new Seraph_Handler('seraph_handler_test', $signals);
-$handler->registerServer('m2', 'tcp://127.0.0.1:9997', 'tcp://127.0.0.1:9996')
+$handler->registerServer('Mongrel2', 'tcp://127.0.0.1:9997', 'tcp://127.0.0.1:9996')
+    ->registerApplication($app)
     ->run();
 
 ```
