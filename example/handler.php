@@ -23,7 +23,7 @@ $app = new HelloWorldApp();
 
 // Handler
 $signals = new Seraph_Signal_Collection();
-$handler = new Seraph_Handler('seraph_handler_test', $signals);
-$handler->registerServer('Mongrel2', 'tcp://127.0.0.1:9997', 'tcp://127.0.0.1:9996')
+$handler = new Seraph_Handler('seraph_example_handler', $signals);
+$handler->registerServer('mongrel2_example', 'tcp://127.0.0.1:9997', 'tcp://127.0.0.1:9996')
     ->registerApplication($app)
     ->run();
