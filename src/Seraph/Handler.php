@@ -11,10 +11,12 @@
 
 class Seraph_Handler
 {
-    const POLL_TIMEOUT = 250; // 250 (ms)
+    const POLL_TIMEOUT       = 250; // 250 (ms)
+    const SERVER_HEADER_NAME = 'X-Mongrel2-Server';
 
     protected $id;
     protected $signals;
+    protected $applications;
     protected $context;
     protected $poll;
     protected $outboundSockets;
@@ -26,16 +28,12 @@ class Seraph_Handler
 
         $this->id              = $id;
         $this->signals         = $signals;
-        $this->dispatcher      = new Seraph_Request_Dispatcher();
         $this->context         = new ZMQContext();
         $this->poll            = new ZMQPoll();
+        $this->request         = new Seraph_Request();
+        $this->response        = new Seraph_Response();
         $this->outboundSockets = array();
-    }
-
-    public function setDispatcher(Seraph_Request_Dispatcher $dispatcher) {
-        $this->dispatcher = $dispatcher;
-
-        return $this;
+        $this->applications    = array();
     }
 
     public function setContext(ZMQContext $context) {
@@ -46,6 +44,18 @@ class Seraph_Handler
 
     public function setPoll(ZMQPoll $poll) {
         $this->poll = $poll;
+
+        return $this;
+    }
+
+    public function setRequest(Seraph_Request $request) {
+        $this->request = $request;
+
+        return $this;
+    }
+
+    public function setResponse(Seraph_Response $response) {
+        $this->response = $response;
 
         return $this;
     }
@@ -73,17 +83,51 @@ class Seraph_Handler
     // public function removeServer($name) { }
 
     public function registerApplication(Seraph_Application_Interface $application) {
-        $this->dispatcher->registerApplication($application);
+        if ( ! in_array($application, $this->applications)) {
+            $this->applications[] = $application;
+        }
 
         return $this;
     }
 
     // public function removeApplication(Seraph_Application_Interface $application) { }
 
+    public function dispatch(Seraph_Request $request, Seraph_Response $response) {
+        foreach ($this->applications as $application) {
+            $application->onRequest($request, $response);
+        }
+
+        return $this;
+    }
+
     public function run() {
         while (true) {
             $this->runOnce();
         }
+    }
+
+    protected function onError($error) {
+        $this->signals->emit('seraph.handler.error', $error);
+    }
+
+    protected function onReadable(ZMQSocket $readable) {
+        $name = $readable->getSockOpt(ZMQ::SOCKOPT_IDENTITY);
+
+        assert(strlen($name));
+        assert(isset($this->outboundSockets[$name]));
+
+        $rawRequest = $readable->recv();
+
+        $this->request->fromRawRequest($rawRequest)
+            ->setHeader(self::SERVER_HEADER_NAME, $name);
+
+        $this->response->fromRequest($this->request);
+
+        // It's dispatchin' time!
+        $this->dispatch($this->request, $this->response);
+
+        $outboundSocket = $this->outboundSockets[$name];
+        $outboundSocket->send($this->response);
     }
 
     /**
@@ -106,16 +150,7 @@ class Seraph_Handler
         }
 
         foreach ($readable as $socket) {
-            $name = $socket->getSockOpt(ZMQ::SOCKOPT_IDENTITY);
-
-            assert(strlen($name));
-            assert(isset($this->outboundSockets[$name]));
-
-            $outboundSocket = $this->outboundSockets[$name];
-
-            $this->dispatcher->onRawRequest($socket, $outboundSocket, $name);
-
-            $this->signals->emit('seraph.handler.raw_request', $socket, $outboundSocket, $name);
+            $this->onReadable($socket);
         }
 
         assert(count($writeable) == 0);

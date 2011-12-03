@@ -17,7 +17,6 @@ class Seraph_HandlerTest extends PHPUnit_Framework_TestCase
         $this->id = 'ID';
 
         $this->mockSignals        = $this->getMock('Seraph_Signal_Collection');
-        $this->mockDispatcher     = $this->getMock('Seraph_Request_Dispatcher');
         $this->mockContext        = $this->getMock('ZMQContext');
         $this->mockPoll           = $this->getMock('ZMQPoll');
         $this->mockInboundSocket  = $this->getMockBuilder('ZMQSocket')
@@ -29,8 +28,7 @@ class Seraph_HandlerTest extends PHPUnit_Framework_TestCase
             ->getMock();
 
         $this->handler = new Seraph_Handler($this->id, $this->mockSignals);
-        $this->handler->setDispatcher($this->mockDispatcher)
-            ->setContext($this->mockContext)
+        $this->handler->setContext($this->mockContext)
             ->setPoll($this->mockPoll);
     }
 
@@ -58,6 +56,19 @@ class Seraph_HandlerTest extends PHPUnit_Framework_TestCase
         $receiverDSN = 'RECEIVER_DSN';
 
         $this->handler->registerServer($name, $senderDSN, $receiverDSN);
+    }
+
+    public function testDispatch() {
+        $mockApplication = $this->getMock('Seraph_Application_Interface');
+        $mockRequest     = $this->getMock('Seraph_Request');
+        $mockResponse    = $this->getMock('Seraph_Response');
+
+        $mockApplication->expects($this->once())
+            ->method('onRequest')
+            ->with($mockRequest, $mockResponse);
+
+        $this->handler->registerApplication($mockApplication)
+            ->dispatch($mockRequest, $mockResponse);
     }
 
     public function testRegister() {
@@ -96,15 +107,5 @@ class Seraph_HandlerTest extends PHPUnit_Framework_TestCase
             ->with($this->mockInboundSocket, ZMQ::POLL_IN);
 
         $this->handler->registerServer($name, $senderDSN, $receiverDSN);
-    }
-
-    public function testRegisterApplication() {
-        $mockApplication = $this->getMock('Seraph_Application_Interface');
-
-        $this->mockDispatcher->expects($this->once())
-            ->method('registerApplication')
-            ->with($mockApplication);
-
-        $this->handler->registerApplication($mockApplication);
     }
 }
