@@ -70,7 +70,7 @@ class Seraph_Response
             $headers .= "$name: $value\r\n";
         }
 
-        $http = "HTTP/1.1 {$this->statusCode} {$this->reasonPhrase}\r\n{$headers}\r\n\r\n{$this->body}\r\n";
+        $http = "HTTP/1.1 {$this->statusCode} {$this->reasonPhrase}\r\n{$headers}\r\n{$this->body}\r\n";
 
         return "{$this->uuid} {$listenerIDs} $http";
     }
