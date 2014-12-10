@@ -1,6 +1,0 @@
-[submodule "vendor/event-dispatcher"]
-	path = vendor/event-dispatcher
-	url = git://github.com/fabpot/event-dispatcher.git
-[submodule "vendor/tnetstring"]
-	path = vendor/tnetstring
-	url = git://github.com/phuedx/tnetstring.git

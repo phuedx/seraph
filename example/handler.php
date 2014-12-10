@@ -9,7 +9,7 @@
  * for the full copyright and license information.
  */
 
-require_once dirname(__FILE__) . '/../autoload.php';
+require_once dirname(__FILE__) . '/../vendor/autoload.php';
 
 // App
 class HelloWorldApp implements Seraph_Application_Interface
